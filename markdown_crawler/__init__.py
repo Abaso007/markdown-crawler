@@ -89,14 +89,7 @@ def crawl(
         return []
     already_crawled.add(url)
 
-    # ---------------------------------
-    # List of elements we want to strip
-    # ---------------------------------
-    strip_elements = []
-
-    if is_links:
-        strip_elements = ['a']
-
+    strip_elements = ['a'] if is_links else []
     # -------------------------------
     # Create BS4 instance for parsing
     # -------------------------------
@@ -111,15 +104,7 @@ def crawl(
     # --------------------------------------------
     if not os.path.exists(file_path):
 
-        file_name = file_path.split("/")[-1]
-
-        # ------------------
-        # Get target content
-        # ------------------
-
-        content = get_target_content(soup, target_content=target_content)
-
-        if content:
+        if content := get_target_content(soup, target_content=target_content):
             # logger.error(f'❌ Empty content for {file_path}. Please check your targets skipping.')
             # return []
 
@@ -131,6 +116,8 @@ def crawl(
                 keep_inline_images_in=['td', 'th', 'a', 'figure'],
                 strip=strip_elements
             )
+
+            file_name = file_path.split("/")[-1]
 
             logger.info(f'Created 📝 {file_name}')
 
@@ -200,9 +187,10 @@ def get_target_links(
     # Get all urls from target_links
     for target in soup.find_all(target_links):
         # Get all the links in target
-        for link in target.find_all('a'):
-            child_urls.append(urllib.parse.urljoin(base_url, link.get('href')))
-
+        child_urls.extend(
+            urllib.parse.urljoin(base_url, link.get('href'))
+            for link in target.find_all('a')
+        )
     result = []
     for u in child_urls:
 
